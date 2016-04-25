@@ -55,29 +55,36 @@ def RungeKutta4(f, x, F, dt):
 def calcLyapunov1(f, x, F, dt):
     x_copy1 = x.copy()
     x_copy2 = x.copy()
-    x_copy2[0] += 0.000001
+    x_copy2[0] += 0.0001
     error_init = np.linalg.norm(x_copy2- x_copy1)
     error = error_init
     error_exponent = [0]
     T = 0
-    while error < error_init*1000000 and error > error_init/1000000:
+    while error < error_init*100000 and error > error_init/100000:
         x_copy1 = RungeKutta4(f, x_copy1, F, dt)
         x_copy2 = RungeKutta4(f, x_copy2, F, dt)
-        error = np.linalg.norm(x_copy2- x_copy1, F)
+        error = np.linalg.norm(x_copy2- x_copy1)
         T += dt
         plt.ylim(-1,15)
         error_exponent.append(np.log(error/ error_init))
-    print(len(error_exponent))
     error_exponent = np.array(error_exponent)
-    t = np.arange(0, dt*len(error_exponent), dt)
-    L1 = error_exponent.dot(error_exponent)/ error_exponent.dot(t)
-    L2 = np.log((error/ error_init))/ T
+    t = np.arange(0, dt*error_exponent.shape[0]-1e-4, dt)
+    L1 = np.log((error/ error_init))/ T
+    L2 = error_exponent.dot(error_exponent)/ error_exponent.dot(t)
     test = np.arange(0, len(error_exponent), 1)
-    plt.plot(test, test*L1*dt)
-    plt.plot(test, test*L2*dt)
-    plt.plot(error_exponent)
+    #plt.title("Fig1")
+    plt.ylim(-0.5, 12)
+    plt.xlabel("TimeStep")
+    plt.ylabel("ln($\delta x_t$/$\delta x_0$)")
+    plt.plot(t, error_exponent, label="plot1")
+    plt.plot(t, test*L1*dt, label="plot2")
+    plt.plot(t, test*L2*dt, label="plot3")
+    plt.legend(loc="upper left")
+    #plt.legend(("plot1", "plot2", "plot3"), "upper left")
+    plt.savefig("Fig1.png",format = 'png', dpi=300)
+    plt.show()
     print(T, L1, L2)
-    return L2, error_exponent
+    return L1, L2
 
 def calcLyapunov2(f, x, F, dt):
     x_new = x.copy()
