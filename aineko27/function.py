@@ -104,14 +104,19 @@ def calcLyapunov2(f, x, F, dt):
 
 #カルマンフィルターの計算
 def KF(x, y, dt, P_a, H, R, flag=True):
+    # xは予報値、yは観測値、dtは時間刻み、P_aは解析値の誤差共分散、Hは観測値をxの次元に変換するもの、Rは観測値の誤差共分散(今回H,Rは単位行列)
     J = len(x)
     a = np.arange(J)
+    #aは0からJ-1までの数字を並べたベクトル、行列の計算をnumpyで簡単に処理するために導入した
+    #下のM[a, a] = v(ベクトル)とすることでM[0,0], M[1,1], ... M[J, J]の成分にvの各成分を代入することができる。下の場合では対角成分に1-dtが入る
+    #M[a, np.append(a[1:], a[:1])] = v(ベクトル)とすることで、Mの対角成分から右に一つずらした成分にvの各成分を代入することができる
     M = np.zeros([J, J])
     M[a, np.append(a[-2:], a[:-2])] = -np.append(x[-1:], x[:-1])* dt
     M[a, np.append(a[-1:], a[:-1])] = (np.append(x[1:], x[:1]) - np.append(x[-2:], x[:-2]))* dt
     M[a, a] = 1- dt
     M[a, np.append(a[1:], a[:1])] = np.append(x[-1:], x[:-1])* dt
     
+    #dotは行列の掛け算、a.Tは転置、np.linalg.invは逆行列を意味する
     P_f = M.dot(P_a).dot(M.T)
     K = P_f.dot(H.T).dot(np.linalg.inv(R + H.dot(P_f).dot(H.T)))
     P_a = (np.eye(J)- K.dot(H)).dot(P_f)

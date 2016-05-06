@@ -6,7 +6,7 @@ Created on Tue May  3 21:15:17 2016
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from function import Lorenz96, RungeKutta4, KF, draw
+from function import Lorenz96, RungeKutta4, KF
 
 #各定数の定義を行う
 T = 0
@@ -18,6 +18,7 @@ P_a = np.eye(J)
 R = np.eye(J)
 H = np.eye(J)
 
+#データの読み込みを行っている。data[i]がiステップ目の４０個のベクトルデータになっている。data1が真値data2が観測値
 data1 = np.loadtxt("data01.txt", delimiter=", ")
 data2 = np.loadtxt("data02.txt", delimiter=", ")
 
@@ -91,6 +92,7 @@ plt.ylim(0, 40)
 plt.plot(Fig5)
 plt.show()
 
+#誤差のノルムを計算
 Fig1 = np.array(Fig1)
 Fig2 = np.array(Fig2)
 Fig3 = np.array(Fig3)
