@@ -20,9 +20,9 @@ x = np.zeros(J)
 initArray(x, 1*F)
 sum1 = []
 sum2 = []
-for i in range(4000):
+for i in range(3100):
     x  = RungeKutta4(Lorenz96, x, F, dt)
-    if i > 2980 and i%100==0:
+    if i > 2980 and i%30==0:
         L1, L2 = calcLyapunov1(Lorenz96, x, F, dt)
         sum1.append(L1)
         sum2.append(L2)
