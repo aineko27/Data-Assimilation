@@ -15,7 +15,7 @@ F = 8.
 J = 40
 
 P_a = np.eye(J)
-R = np.eye(J)
+R = np.eye(J)*1
 H = np.eye(J)
 
 #データの読み込みを行っている。data[i]がiステップ目の４０個のベクトルデータになっている。data1が真値data2が観測値
@@ -29,7 +29,7 @@ for i in range(1, len(data2)):
     x_t = data1[i]
     x_f = RungeKutta4(Lorenz96, x_a, F, dt)
     y = data2[i]
-    x_a, P_a = KF(x_f, y, dt, P_a, H, R)
+    x_a, P_a = KF(x_a, x_f, y, dt, P_a, H, R)
     Fig1.append(np.linalg.norm(x_t- x_a))
 
 #最初に観測値だけを代入してその後は観測値を全く使わずに計算した場合
@@ -73,24 +73,50 @@ for i in range(1, len(data2)):
     Fig5.append(np.linalg.norm(x_t- x_a))
 plt.xlim(0, 1460)
 plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
 plt.plot(Fig1)
+#plt.title("case 3")
+#plt.savefig("Fig4.png",format = 'png', dpi=300)
 plt.show()
 plt.xlim(0, 1460)
 plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
 plt.plot(Fig2)
 plt.show()
 plt.xlim(0, 1460)
 plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
 plt.plot(Fig3)
 plt.show()
 plt.xlim(0, 1460)
 plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
 plt.plot(Fig4)
 plt.show()
 plt.xlim(0, 1460)
 plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
 plt.plot(Fig5)
 plt.show()
+
+plt.plot(Fig1, label="x_a = KF(x_f, y)")
+plt.plot(Fig2, label="x_a = x_f")
+plt.plot(Fig3, label="x_a = y")
+plt.plot(Fig4, label="x_a = (x_f + y)/2")
+plt.xlim(0, 1460)
+plt.ylim(0, 40)
+plt.xlabel("TimeSteps")
+plt.ylabel("Error")
+#plt.legend(loc=2)
+#plt.legend(bbox_to_anchor=(1.05, 1), loc=2)#, borderaxespad=0.)
+#plt.savefig("Fig4.png",format = 'png', dpi=300)
+plt.show()
+
 
 #誤差のノルムを計算
 Fig1 = np.array(Fig1)
@@ -99,3 +125,4 @@ Fig3 = np.array(Fig3)
 Fig4 = np.array(Fig4)
 Fig5 = np.array(Fig5)
 print(Fig1.mean(), Fig2.mean(), Fig3.mean(), Fig4.mean(), Fig5.mean())
+print(Fig1.std(), Fig2.std(), Fig3.std(), Fig4.std(), Fig5.std())
