@@ -13,7 +13,6 @@ import numpy as np
 #初期条件を設定する関数
 def initArray(x, F):
     global T
-    F = F
     x[:] = F
     x[len(x)//2] *= 1.001
     T = 0
@@ -40,7 +39,7 @@ def draw(x, ylim=False, title="", label0="", label1=""):
 #ローレンツ96の式を定義する関数
 def Lorenz96(x, F):
     y = np.zeros_like(x)
-    y = np.append(x[1:], x[:1])* np.append(x[-1:], x[:-1])- np.append(x[-2:], x[:-2])* np.append(x[-1:], x[:-1]) - x[:] + F
+    y = np.append(x[1:], x[:1], axis=0)* np.append(x[-1:], x[:-1], axis=0)- np.append(x[-2:], x[:-2], axis=0)* np.append(x[-1:], x[:-1], axis=0) - x[:] + F
     return y
 
 #関数fに対して4次のルンゲクッタを計算する関数
@@ -103,36 +102,41 @@ def calcLyapunov2(f, x, F, dt):
     print(sum, np.log(2)/sum)
 
 #カルマンフィルターの計算
-def KF(x_a, x_f, y, dt, P_a, H, R, flag=True):
+def KF(x_a, x_f, y, dt, P_a, H, R):
     # xは予報値、yは観測値、dtは時間刻み、P_aは解析値の誤差共分散、Hは観測値をxの次元に変換するもの、Rは観測値の誤差共分散(今回H,Rは単位行列)
-    J = len(x_a)
-    a = np.arange(J)
     #aは0からJ-1までの数字を並べたベクトル、行列の計算をnumpyで簡単に処理するために導入した
     #下のM[a, a] = v(ベクトル)とすることでM[0,0], M[1,1], ... M[J, J]の成分にvの各成分を代入することができる。下の場合では対角成分に1-dtが入る
     #M[a, np.append(a[1:], a[:1])] = v(ベクトル)とすることで、Mの対角成分から右に一つずらした成分にvの各成分を代入することができる
-    M = np.zeros([J, J])
-    M[a, np.append(a[-2:], a[:-2])] = -np.append(x_a[-1:], x_a[:-1])* dt
-    M[a, np.append(a[-1:], a[:-1])] = (np.append(x_a[1:], x_a[:1]) - np.append(x_a[-2:], x_a[:-2]))* dt
-    M[a, a] = 1- dt
-    M[a, np.append(a[1:], a[:1])] = np.append(x_a[-1:], x_a[:-1])* dt
+#    J = len(x_a)
+#    a = np.arange(J)
+#    M1 = np.zeros([J, J])
+#    M1[a, np.append(a[-2:], a[:-2])] = -np.append(x_a[-1:], x_a[:-1])* dt
+#    M1[a, np.append(a[-1:], a[:-1])] = (np.append(x_a[1:], x_a[:1]) - np.append(x_a[-2:], x_a[:-2]))* dt
+#    M1[a, a] = 1- dt
+#    M1[a, np.append(a[1:], a[:1])] = np.append(x_a[-1:], x_a[:-1])* dt
+    #ヤコビアンの求め方その２
+    J = len(x_a)
+    M2 = np.zeros([J, J])
+    delta = 1e-5
+    M2 = (RungeKutta4(Lorenz96, (np.tile(x_a.reshape(J, 1), [1, J]) + np.eye(J)* delta), 8.0, dt) - x_f.reshape(J, 1))/ delta
     
     #dotは行列の掛け算、a.Tは転置、np.linalg.invは逆行列を意味する
-    P_f = M.dot(P_a).dot(M.T)
+    P_f = M2.dot(P_a).dot(M2.T)
     K = P_f.dot(H.T).dot(np.linalg.inv(R + H.dot(P_f).dot(H.T)))
     P_a = (np.eye(J)- K.dot(H)).dot(P_f)
+    P_a = 1.08* P_a
     
     x = x_f + K.dot(y- H.dot(x_f))
     return x, P_a
 
-
-
-
-
-
-
-
-
-
+#三次元変分法の計算
+def calc3DVAR(x_f, y, H):
+    R = y.reshape(40, 1)@ y.reshape(1, 40) - y.reshape(40, 1)@ x_f.reshape(1, 40)@ H.T
+    B = x_f.reshape(40, 1)@ x_f.reshape(1, 40) - H.T@ y.reshape(40, 1)@ x_f.reshape(1, 40)
+    R = np.eye(40)
+    B = np.eye(40)* 0.3
+    x = x_f + (y- H@ x_f)@ np.linalg.inv(np.linalg.inv(B) + H.T@ np.linalg.inv(R)@ (H))@ H@ np.linalg.inv(R)
+    return x
 
 
 
