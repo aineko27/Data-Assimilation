@@ -134,7 +134,6 @@ def calc3DVAR(x_f, y, H):
     R = np.eye(40)
     B = np.eye(40)* 0.3
     x = x_f + (y- H.dot(x_f)).dot(np.linalg.inv(np.linalg.inv(B)+ H.T.dot(np.linalg.inv(R).dot(H))).dot(H.T).dot(np.linalg.inv(R)))
-    #x = x_f + (y- H.dot(x_f)).dot(np.linalg.inv(np.linalg.inv(B))) + H.T.dot(np.linalg.inv(R)dot.(H))@ H@ np.linalg.inv(R)
     return x
 
 
