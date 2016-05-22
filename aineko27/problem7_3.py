@@ -29,7 +29,8 @@ Fig2 = []
 Fig3 = []
 
 #観測点を減らした時にどのような結果になるのかを計算する。抜け落ちた観測点の数をiで表す
-for i in range(0, J//2+1):
+#まずはカルマンフィルターでやってみる
+for i in range(0, J):
     isExist = np.in1d(np.arange(J), np.round(np.arange(0, J, J/(J-i))))
     H = np.zeros([J, J-i])
     count = 0
@@ -38,12 +39,13 @@ for i in range(0, J//2+1):
             H[j, count] = 1
             count += 1
         else:
-            H[j, count-1] = 0.5
-            H[j, count%(J-i)] = 0.5
+            H[j, count-1] = 0.
+            H[j, count%(J-i)] = 0.
     H = H.T
     R = np.eye(J-i)
     ERROR = []
     x_a = np.random.normal(0, 10, J)
+    P_a = np.eye(J)*10
     for j in range(1, len(data2)):
         x_t = data1[j]
         x_f = RungeKutta4(Lorenz96, x_a, F, dt)
@@ -55,7 +57,34 @@ for i in range(0, J//2+1):
 Fig1 = np.array(Fig1)
 plt.plot(Fig1)
 
-
+#次に３DVARでやってみる
+for i in range(0, J):
+    isExist = np.in1d(np.arange(J), np.round(np.arange(0, J, J/(J-i))))
+    H = np.zeros([J, J-i])
+    count = 0
+    for j in range(0, J):
+        if isExist[j]:
+            H[j, count] = 1
+            count += 1
+        else:
+            H[j, count-1] = 0.
+            H[j, count%(J-i)] = 0.
+    H = H.T
+    R = np.eye(J-i)
+    ERROR = []
+    x_a = np.random.normal(0, 10, J)
+    P_a = np.eye(J)*10
+    B = np.loadtxt("B_Refine.txt", delimiter=", ")
+    for j in range(1, len(data2)):
+        x_t = data1[j]
+        x_f = RungeKutta4(Lorenz96, x_a, F, dt)
+        y = data2[j][isExist]
+        x_a = calc3DVAR(x_f, y, H, B, R)
+        ERROR.append(np.linalg.norm(x_t- x_a)/np.sqrt(J))
+    ERROR = np.array(ERROR)
+    Fig2.append(ERROR.mean())
+Fig2 = np.array(Fig2)
+plt.plot(Fig2)
 
 
 

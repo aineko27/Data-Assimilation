@@ -118,10 +118,9 @@ def KF(x_a, x_f, y, dt, P_a, H, R):
     return x, P_a
 
 #三次元変分法の計算
-def calc3DVAR(x_f, y, H, B):
-    R = np.eye(40)
-    #B = np.eye(40)* 0.3
-    x = x_f + (y- H.dot(x_f)).dot(np.linalg.inv(np.linalg.inv(B)+ H.T.dot(np.linalg.inv(R).dot(H))).dot(H.T).dot(np.linalg.inv(R)))
+def calc3DVAR(x_f, y, H, B, R):
+    x = x_f + np.linalg.inv(np.linalg.inv(B)+ H.T.dot(np.linalg.inv(R).dot(H))).dot(H.T).dot(np.linalg.inv(R)).dot(y- H.dot(x_f))
+    #x = x_f + (y- H.dot(x_f)).dot(np.linalg.inv(np.linalg.inv(B)+ H.T.dot(np.linalg.inv(R).dot(H))).dot(H.T).dot(np.linalg.inv(R)))
     return x
 
 

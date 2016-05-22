@@ -36,11 +36,10 @@ for i in range(1, 100):
         x_t = data1[j]
         x_f = RungeKutta4(Lorenz96, x_a, F, dt)
         y = data2[j]
-        x_a = calc3DVAR(x_f, y, H, B*i*gap)
+        x_a = calc3DVAR(x_f, y, H, B*i*gap, R)
         ERROR.append(np.linalg.norm(x_t- x_a)/ np.sqrt(J))
     ERROR = np.array(ERROR)
     Fig1.append(ERROR.mean())
-#%%
 Fig1 = np.array(Fig1)
 plt.xlabel("B wo nanbai sitaka")
 plt.ylabel("RMSE")
