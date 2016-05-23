@@ -36,7 +36,7 @@ for i in range(0, J):
     count = 0
     for j in range(0, J):
         if isExist[j]:
-            H[j, count] = 1
+            H[j, (count)%(J-i)] = 1
             count += 1
         else:
             H[j, count-1] = 0.
@@ -54,8 +54,6 @@ for i in range(0, J):
         ERROR.append(np.linalg.norm(x_t- x_a)/np.sqrt(J))
     ERROR = np.array(ERROR)
     Fig1.append(ERROR.mean())
-Fig1 = np.array(Fig1)
-plt.plot(Fig1)
 
 #次に３DVARでやってみる
 for i in range(0, J):
@@ -83,20 +81,16 @@ for i in range(0, J):
         ERROR.append(np.linalg.norm(x_t- x_a)/np.sqrt(J))
     ERROR = np.array(ERROR)
     Fig2.append(ERROR.mean())
+#%%
+Fig1 = np.array(Fig1)
+plt.plot(np.arange(40,0,-1), Fig1, label="KF")
 Fig2 = np.array(Fig2)
-plt.plot(Fig2)
-
-
-
-
-
-
-
-
-
-
-
-
+plt.plot(np.arange(40,0,-1), Fig2, label="3DVAR")
+#plt.title(")
+plt.xlabel("The number of observation Points")
+plt.ylabel("RMSE")
+plt.legend(loc="lower left")
+plt.show()
 
 
 

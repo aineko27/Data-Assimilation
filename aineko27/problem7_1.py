@@ -57,6 +57,9 @@ B = np.zeros([40, 40])
 B = Fig1.T.dot(Fig1)/Fig1.shape[0]
 a = np.arange(B.shape[0])
 
+plt.title("B")
+plt.xlabel("row")
+plt.ylabel("column")
 plt.colorbar(plt.imshow(B,interpolation="nearest"))
 plt.show()
 
@@ -67,6 +70,9 @@ for i in a:
     B_Mean[a, a-i] = B[a-i, a].mean()
 np.savetxt("B_Mean.txt", B_Mean, delimiter=", ")
 
+plt.title("B_Mean")
+plt.xlabel("row")
+plt.ylabel("column")
 plt.colorbar(plt.imshow(B_Mean,interpolation="nearest"))
 plt.show()
 

@@ -40,8 +40,10 @@ for i in range(1, 100):
         ERROR.append(np.linalg.norm(x_t- x_a)/ np.sqrt(J))
     ERROR = np.array(ERROR)
     Fig1.append(ERROR.mean())
+#%%
 Fig1 = np.array(Fig1)
-plt.xlabel("B wo nanbai sitaka")
+plt.title("Constant and RMSE")
+plt.xlabel("constant (B*x)")
 plt.ylabel("RMSE")
 plt.plot(np.arange(gap, gap*100, gap), Fig1)
 plt.show()
