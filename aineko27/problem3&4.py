@@ -36,7 +36,7 @@ f.close()                                  #=
 data1 = np.loadtxt("data01.txt", delimiter=", ")                   #=
 f = open("data02.txt", "w")                                        #=
 for i in range(len(data1)):                                        #=
-    line = data1[i] + np.random.normal(0, 1., 40)                  #=
+    line = data1[i] + np.random.normal(0, 1., J)                  #=
     string = str(line[0])                                          #=
     for j in range(1, J):                                          #=
         string += ", " + str(line[j])                              #=
@@ -44,7 +44,18 @@ for i in range(len(data1)):                                        #=
 f.close()                                                          #=
 #====================================================================
 
-
+#%%
+#アトラクタ上からm個のデータを取ってきて保存する
+m =40
+f = open("X_init.txt", "w")
+for i in range(100*m):
+    x = RungeKutta4(Lorenz96, x, F, dt)
+    if i%100==0:
+        string =str(x[0])
+        for j in range(1, J):
+            string += "," + str(x[j])
+        f.write(string+ "\n")
+f.close()
 
 
 
