@@ -46,7 +46,7 @@ f.close()                                                          #=
 
 #%%
 #アトラクタ上からm個のデータを取ってきて保存する
-m =40
+m = 8
 f = open("X_init.txt", "w")
 for i in range(100*m):
     x = RungeKutta4(Lorenz96, x, F, dt)

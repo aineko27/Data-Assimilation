@@ -7,6 +7,7 @@ Created on Tue Apr 19 18:56:35 2016
 
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 #np.seterr(all="ignore")
 #np.seterr(all="raise")
 
@@ -35,6 +36,9 @@ def draw(x, ylim=False, title="", label0="", label1=""):
         plt.xlim(0, x.shape[1])
         plt.plot(np.append(x, x[:,0:1], axis=1).T)
     plt.show()
+    
+def imshow(M):
+    plt.colorbar(plt.imshow(M, interpolation="nearest"))
 
 #ローレンツ96の式を定義する関数
 def Lorenz96(x, F):
@@ -124,14 +128,14 @@ def calc3DVAR(x_f, y, H, B, R):
     return x
 
 #アンサンブルカルマンフィルターの計算。こっちはうまくいかなかったので無視していい
-def EnKF(X_f, y, m, R, H):
-    inf = 0.3*np.eye(40)
-    inf = 1
+def EnKF(X_f, y, m, R, H, rho=1, inf=1):
     y = y.reshape(len(y), 1)
-    dX = X_f- X_f.mean(axis=1, keepdims=True)
+    dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf#+ np.random.normal(0, 1, X_f.shape)
     dY = H.dot(dX)
-    K = inf*(dX.dot(dY.T)).dot(np.linalg.inv(inf*(dY.dot(dY.T))+ (m-1)*R))
-    return X_f + K.dot((y+ np.random.normal(0, 1, [m, len(X_f)])- H.dot(X_f)))
+    K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
+    e = np.ones(X_f.shape)
+    e = np.random.normal(0, 1, X_f.shape)
+    return X_f + K.dot((y + e - H.dot(X_f)))
     
 #アンサンブルカルマンフィルターの計算その２
 def LETKF(X_f, y, m, R, H, inf):
@@ -145,6 +149,35 @@ def LETKF(X_f, y, m, R, H, inf):
     X_a = X_f.mean(axis=1, keepdims=True) + dX.dot(U.dot(np.diag(D)).dot(U.T).dot(dY.T).dot(np.linalg.inv(R)).dot(y-H.dot(X_f.mean(axis=1, keepdims=True)))+np.sqrt(m-1)*U.dot(np.diag(np.sqrt(D))).dot(U.T))
     return X_a
     
+#ローカリゼーションしたバージョン
+def LETKF2(X_f, y, m, R, H, inf):
+    J = len(y)
+    y = y.reshape(len(y), 1)
+    x_f = X_f.mean(axis=1, keepdims=True)
+    dX = X_f- x_f
+    dY = H.dot(dX)
+    X_a = np.zeros(X_f.shape)
+    for i in range(J):
+        D, U = np.linalg.eigh((m-1)*np.eye(m)/inf + dY.T.dot(np.linalg.inv(R[i])).dot(dY))
+        D = 1/D
+        X_a[i,:] = (x_f + dX.dot(U.dot(np.diag(D)).dot(U.T).dot(dY.T).dot(np.linalg.inv(R[i])).dot(y-H.dot(x_f))+np.sqrt(m-1)*U.dot(np.diag(np.sqrt(D))).dot(U.T)))[i,:]
+    return X_a
+    
+#計算を高速化した場合。上手くいかなかったので無視していい
+def LETKF3(X_f, y, m, R, H, inf, rho):
+    J = len(y)
+    a = np.arange(J)
+    y = y.reshape(len(y), 1)
+    x_f = X_f.mean(axis=1, keepdims=True)
+    dX = X_f - x_f
+    dY = H.dot(dX)
+    R_loc = R/ rho
+    D, U = np.linalg.eigh((m-1)*np.eye(m)/inf + dY.T@(np.linalg.inv(R_loc))@(dY))
+    D = 1/ D
+    M1 = np.tile(np.eye(J).reshape(J, 1, J), [1, m, 1])
+    M2 = np.eye(m)
+    X_a = x_f + dX.reshape(1, 40, 39)@(U@(M1@D*M2)@(np.transpose(U, axes=[0,2,1]))@(dY.T)@(R_loc)@(y-H@(x_f))+np.sqrt(m-1)*U@(M1@np.sqrt(D)*M2)@(np.transpose(U, axes=[0,2,1])))
+    return X_a[np.arange(J), np.arange(J), :]
     
     
     
