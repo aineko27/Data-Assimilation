@@ -127,15 +127,27 @@ def calc3DVAR(x_f, y, H, B, R):
     #x = x_f + (y- H.dot(x_f)).dot(np.linalg.inv(np.linalg.inv(B)+ H.T.dot(np.linalg.inv(R).dot(H))).dot(H.T).dot(np.linalg.inv(R)))
     return x
 
-#アンサンブルカルマンフィルターの計算。こっちはうまくいかなかったので無視していい
+#アンサンブルカルマンフィルターの計算。
 def EnKF(X_f, y, m, R, H, rho=1, inf=1):
     y = y.reshape(len(y), 1)
     dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf#+ np.random.normal(0, 1, X_f.shape)
     dY = H.dot(dX)
-    K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
-    e = np.ones(X_f.shape)
-    e = np.random.normal(0, 1, X_f.shape)
-    return X_f + K.dot((y + e - H.dot(X_f)))
+    K = rho*(dX@ dX.T)@H.T@ (np.linalg.inv(H@ (rho* (dX@dX.T))@ H.T+ (m-1)*R))
+    #K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
+    e = np.random.normal(0, 1, dY.shape)
+    return X_f + K.dot(y + e - H.dot(X_f))
+    rho=1
+    
+#アンサンブルカルマンフィルターの計算。観測時刻が同一でなくとも計算できるようにした。計算式は授業のものを参考にした
+def EnKF2(X_f_temp, X_f, y, m, R, H, rho=1, inf=1):
+    y = y.reshape(len(y), 1)
+    dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf
+    dX_temp = (X_f_temp- X_f_temp.mean(axis=1, keepdims=True))*inf
+    dY = H.dot(dX)
+    K = rho*(dX@ dX_temp.T)@H.T@ (np.linalg.inv(H@ (rho* (dX_temp@dX_temp.T))@ H.T+ (m-1)*R))
+    #K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
+    e = np.random.normal(0, 1, dY.shape)
+    return X_f + K.dot(y + e - H.dot(X_f_temp))
     
 #アンサンブルカルマンフィルターの計算その２
 def LETKF(X_f, y, m, R, H, inf):
