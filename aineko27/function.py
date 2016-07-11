@@ -39,6 +39,7 @@ def draw(x, ylim=False, title="", label0="", label1=""):
     
 def imshow(M):
     plt.colorbar(plt.imshow(M, interpolation="nearest"))
+    plt.show()
 
 #ローレンツ96の式を定義する関数
 def Lorenz96(x, F):
@@ -131,12 +132,14 @@ def calc3DVAR(x_f, y, H, B, R):
 def EnKF(X_f, y, m, R, H, rho=1, inf=1):
     y = y.reshape(len(y), 1)
     dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf#+ np.random.normal(0, 1, X_f.shape)
+#    print(np.diag(dX@dX.T))
     dY = H.dot(dX)
     K = rho*(dX@ dX.T)@H.T@ (np.linalg.inv(H@ (rho* (dX@dX.T))@ H.T+ (m-1)*R))
     #K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
     e = np.random.normal(0, 1, dY.shape)
-    return X_f + K.dot(y + e - H.dot(X_f))
-    rho=1
+    X_a = X_f + K@(y + e- H@X_f)
+    R_temp = (y- X_a)@ (y- X_f).T
+    return X_a, R_temp
     
 #アンサンブルカルマンフィルターの計算。観測時刻が同一でなくとも計算できるようにした。計算式は授業のものを参考にした
 def EnKF2(X_f_temp, X_f, y, m, R, H, rho=1, inf=1):
@@ -149,6 +152,22 @@ def EnKF2(X_f_temp, X_f, y, m, R, H, rho=1, inf=1):
     e = np.random.normal(0, 1, dY.shape)
     return X_f + K.dot(y + e - H.dot(X_f_temp))
     
+#アダプティブ法で計算する
+def EnKF3(X_f, X_a, y, m, R, H, rho, delta_mean):
+    y = y.reshape(len(y), 1)
+    dX = X_f- X_f.mean(axis=1, keepdims=True)
+    dY = H.dot(dX)
+    d_ob = y- H@ X_f.mean(axis=1, keepdims=True)
+    d_ab = H@(X_a.mean(axis=1, keepdims=True)- X_f.mean(axis=1, keepdims=True))
+    Pb = dX@ dX.T/(m-1)
+    delta = (d_ab.T@ d_ob)/ np.trace((H@ Pb@ H.T))
+    delta_mean = 0.9* delta_mean + 0.1* np.abs(delta)
+    Pb = Pb *(delta_mean)
+    K = rho*(Pb)@H.T@ (np.linalg.inv(H@ (rho* (Pb))@ H.T+ R))
+    e = np.random.normal(0, 1, dY.shape)
+    return X_f + K.dot(y + e - H.dot(X_f)), delta_mean
+    
+
 #アンサンブルカルマンフィルターの計算その２
 def LETKF(X_f, y, m, R, H, inf):
     #yを一応縦の行列にしとく。dX,dYを計算してTT^Tをもとめる。求めたTT^Tを固有値分解してTの値を求める。
