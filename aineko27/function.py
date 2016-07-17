@@ -139,7 +139,7 @@ def EnKF(X_f, y, m, R, H, rho=1, inf=1):
     e = np.random.normal(0, 1, dY.shape)
     X_a = X_f + K@(y + e- H@X_f)
     R_temp = (y- X_a)@ (y- X_f).T
-    return X_a, R_temp
+    return X_a, R_temp/40
     
 #アンサンブルカルマンフィルターの計算。観測時刻が同一でなくとも計算できるようにした。計算式は授業のものを参考にした
 def EnKF2(X_f_temp, X_f, y, m, R, H, rho=1, inf=1):
