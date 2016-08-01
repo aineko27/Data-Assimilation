@@ -37,8 +37,11 @@ def draw(x, ylim=False, title="", label0="", label1=""):
         plt.plot(np.append(x, x[:,0:1], axis=1).T)
     plt.show()
     
-def imshow(M):
-    plt.colorbar(plt.imshow(M, interpolation="nearest"))
+def imshow(M, v_max=0, v_min=0):
+    if v_max==v_min:
+        plt.colorbar(plt.imshow(M, interpolation="nearest"))
+    else:
+        plt.colorbar(plt.imshow(M, interpolation="nearest", vmax=v_max, vmin=v_min))
     plt.show()
 
 #ローレンツ96の式を定義する関数
@@ -138,8 +141,10 @@ def EnKF(X_f, y, m, R, H, rho=1, inf=1):
     #K = rho*(dX.dot(dY.T)).dot(np.linalg.inv(rho*(dY.dot(dY.T))+ (m-1)*R))
     e = np.random.normal(0, 1, dY.shape)
     X_a = X_f + K@(y + e- H@X_f)
-    R_temp = (y- X_a)@ (y- X_f).T
-    return X_a, R_temp/40
+    R_temp = (y- X_a)@ (y- X_f).T/ 40
+    HBH = (X_a- X_f)@ (y- X_f).T/ 40
+    HBH_R = (y- X_f)@ (y- X_f).T/ 40
+    return X_a, R_temp
     
 #アンサンブルカルマンフィルターの計算。観測時刻が同一でなくとも計算できるようにした。計算式は授業のものを参考にした
 def EnKF2(X_f_temp, X_f, y, m, R, H, rho=1, inf=1):
@@ -167,6 +172,35 @@ def EnKF3(X_f, X_a, y, m, R, H, rho, delta_mean):
     e = np.random.normal(0, 1, dY.shape)
     return X_f + K.dot(y + e - H.dot(X_f)), delta_mean
     
+#アンサンブルカルマンフィルターの計算。
+def EnKF4(X_f, y, m, R, H, rho=1, inf=1):
+    y = y.reshape(len(y), 1)
+    dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf
+    dY = H.dot(dX)
+    K = rho*(dX@ dX.T)@H.T@ (np.linalg.inv(H@ (rho* (dX@dX.T))@ H.T+ (m-1)*R))
+    e = np.random.normal(0, 1, dY.shape)
+    X_a = X_f + K@(y + e- H@X_f)
+    R_temp = (y- X_a)@ (y- X_f).T/ 39
+    HBH = (X_a- X_f)@ (y- X_f).T/ 39
+    HBH_R = (y- X_f)@ (y- X_f).T/ 39
+    delta = np.trace(HBH)/ (np.trace(dX@dX.T)/ 39)
+    return X_a, R_temp, HBH, delta
+    
+#アンサンブルカルマンフィルターの計算。
+def EnKF5(X_f, y, m, R, H, rho=1, inf=1, P_f=1):
+    y = y.reshape(len(y), 1)
+    dX = (X_f- X_f.mean(axis=1, keepdims=True))*inf
+    dY = H.dot(dX)
+    P_f = dX@ dX.T
+    K = rho*(P_f)@H.T@ (np.linalg.inv(H@ (rho* (P_f))@ H.T+ (m-1)*R))
+    e = np.random.normal(0, np.sqrt(R[0,0]), dY.shape)
+    X_a = X_f + K@(y + e- H@X_f)
+    R_temp = (y- H@X_a)@ (y- H@X_f).T/ (m-1)
+    HBH = (H@X_a- H@X_f)@ (y- H@X_f).T/ (m-1)
+    HBH_R = (y- H@X_f)@ (y- H@X_f).T/ (m-1)
+    delta = np.trace(HBH)/ (np.trace(dX@dX.T)/ (m-1))
+#    delta = delta/ np.trace(R_temp)*40
+    return X_a, delta, R_temp, HBH, HBH_R, dX@dX.T, K
 
 #アンサンブルカルマンフィルターの計算その２
 def LETKF(X_f, y, m, R, H, inf):
